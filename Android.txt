@@ -1,0 +1,36 @@
+# cmake cpu+ncnn
+cmake .. \
+    -DMMDEPLOY_BUILD_SDK=ON \
+    -DMMDEPLOY_BUILD_EXAMPLES=ON \
+    -DMMDEPLOY_BUILD_SDK_JAVA_API=ON \
+    -DOpenCV_DIR=/home/pirlo/OpenCV-android-sdk/sdk/native/jni/abi-arm64-v8a \
+    -Dncnn_DIR=/home/pirlo/ncnn/build_arm64-v8a/install/lib/cmake/ncnn \
+    -DMMDEPLOY_TARGET_BACKENDS=ncnn \
+    -DMMDEPLOY_SHARED_LIBS=OFF \
+    -DCMAKE_TOOLCHAIN_FILE=/opt/android-ndk-r23c/build/cmake/android.toolchain.cmake \
+    -DANDROID_ABI=arm64-v8a \
+    -DANDROID_PLATFORM=android-30 \
+    -DANDROID_CPP_FEATURES="rtti exceptions"
+
+# cmake ncnn
+cd ${MMDEPLOY_DIR}
+mkdir -p build && cd build
+cmake -DCMAKE_CXX_COMPILER=g++-7 -DMMDEPLOY_TARGET_BACKENDS=ncnn -Dncnn_DIR=/home/pirlo/ncnn/build_arm64-v8a/install/lib/cmake/ncnn ..
+make -j$(nproc) && make install
+
+
+# cmake pytorch2onnx
+python tools/deploy.py \
+    configs/mmdet/detection/single-stage_ncnn_static-800x1344.py \
+    models_yu/ld_r18_gflv1_r101_fpn_coco_1x_student.py \
+    models_yu/epoch_12.pth \
+    demo/demo.jpg \
+    --work-dir models_work/r18 \
+    --device cpu \
+    --show \
+    --dump-info
+
+    configs/mmdet/detection/single-stage_ncnn_dynamic.py \
+    configs/mmdet/detection/single-stage_ncnn_static-800x1344.py \
+    configs/mmcls/classification_ncnn_dynamic.py \
+    configs/mmcls/classification_ncnn_dynamic.py \
